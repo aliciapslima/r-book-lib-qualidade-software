@@ -213,3 +213,91 @@ describe('LibraryService - Empréstimos', () => {
         expect(mockUser.loanCount()).toBe(1); // usuário tem 1 empréstimo
     });
 });
+
+describe('LibraryService - Devoluções', () => {
+    
+    it('deve lançar um erro ao tentar devolver um livro que o usuário não emprestou', () => {
+
+        // ARRANGE
+        const userId = "123";
+        const bookTitle = "O Hobbit";
+
+        // simula usuário que NÃO tem o livro emprestado
+        const mockUser = new User(userId, "João Silva");
+        mockRepository.findUser.mockReturnValue(mockUser);
+
+        // simula que o livro existe
+        const mockBook = new Book(bookTitle, "J.R.R. Tolkien", 3);
+        mockRepository.findBook.mockReturnValue(mockBook);
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.returnBook(userId, bookTitle);
+        }).toThrow("Usuário não emprestou este livro");
+    });
+
+    it('deve lançar um erro ao tentar devolver um livro inexistente', () => {
+
+        // ARRANGE
+        const userId = "123";
+        const bookTitle = "Livro Inexistente";
+
+        // simula usuário que existe
+        const mockUser = new User(userId, "João Silva");
+        mockRepository.findUser.mockReturnValue(mockUser);
+
+        // simula que o livro NÃO existe
+        mockRepository.findBook.mockReturnValue(null);
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.returnBook(userId, bookTitle);
+        }).toThrow("Livro não encontrado");
+    });
+
+    it('deve lançar um erro quando devolução excederia a quantidade máxima (5)', () => {
+
+        // ARRANGE
+        const userId = "123";
+        const bookTitle = "Código Limpo";
+
+        // simula usuário que tem o livro emprestado
+        const mockUser = new User(userId, "João Silva");
+        mockUser.borrow(bookTitle);
+        mockRepository.findUser.mockReturnValue(mockUser);
+
+        // simula livro com quantidade já no máximo (5)
+        const mockBook = new Book(bookTitle, "Robert C. Martin", 5);
+        mockRepository.findBook.mockReturnValue(mockBook);
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.returnBook(userId, bookTitle);
+        }).toThrow("Quantidade máxima atingida");
+    });
+
+    it('deve realizar devolução com sucesso: incrementa quantidade e remove registro de empréstimo', () => {
+
+        // ARRANGE
+        const userId = "123";
+        const bookTitle = "Domain-Driven Design";
+
+        // simula usuário que tem o livro emprestado
+        const mockUser = new User(userId, "João Silva");
+        mockUser.borrow(bookTitle);
+        mockRepository.findUser.mockReturnValue(mockUser);
+
+        // simula livro com quantidade 2 (pode receber devolução)
+        const mockBook = new Book(bookTitle, "Eric Evans", 2);
+        mockRepository.findBook.mockReturnValue(mockBook);
+
+        // ACT
+        const result = libraryService.returnBook(userId, bookTitle);
+
+        // ASSERT
+        expect(result).toBe(true);
+        expect(mockBook.quantity).toBe(3); // quantidade foi incrementada
+        expect(mockUser.hasBorrowed(bookTitle)).toBe(false); // livro foi removido do registro do usuário
+        expect(mockUser.loanCount()).toBe(0); // usuário não tem mais empréstimos
+    });
+});
