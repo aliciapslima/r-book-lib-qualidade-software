@@ -87,3 +87,129 @@ describe('LibraryService - Usuários', () => {
         expect(mockRepository.addUser).not.toHaveBeenCalled();
     });
 });
+
+describe('LibraryService - Empréstimos', () => {
+    
+    it('deve lançar um erro ao tentar emprestar um livro inexistente', () => {
+
+        // ARRANGE
+        const userId = "123";
+        const bookTitle = "Livro Inexistente";
+
+        // simula que o usuário existe
+        const mockUser = new User(userId, "João Silva");
+        mockRepository.findUser.mockReturnValue(mockUser);
+
+        // simula que o livro NÃO existe no repositório
+        mockRepository.findBook.mockReturnValue(null);
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.borrowBook(userId, bookTitle);
+        }).toThrow("Livro não encontrado");
+    });
+
+    it('deve lançar um erro ao tentar emprestar um livro com quantidade 0', () => {
+
+        // ARRANGE
+        const userId = "123";
+        const bookTitle = "Harry Potter";
+
+        // simula que o usuário existe
+        const mockUser = new User(userId, "João Silva");
+        mockRepository.findUser.mockReturnValue(mockUser);
+
+        // simula que o livro existe mas com quantidade 0 (todos os exemplares emprestados)
+        const mockBook = new Book(bookTitle, "J.K. Rowling", 1);
+        mockBook.quantity = 0; // simula que todos os exemplares foram emprestados
+        mockRepository.findBook.mockReturnValue(mockBook);
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.borrowBook(userId, bookTitle);
+        }).toThrow("Nenhum exemplar disponível");
+    });
+
+    it('deve lançar um erro ao tentar emprestar para um usuário inexistente', () => {
+
+        // ARRANGE
+        const userId = "999";
+        const bookTitle = "Harry Potter";
+
+        // simula que o usuário NÃO existe
+        mockRepository.findUser.mockReturnValue(null);
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.borrowBook(userId, bookTitle);
+        }).toThrow("Usuário não encontrado");
+    });
+
+    it('deve lançar um erro quando usuário já tem 3 livros emprestados', () => {
+
+        // ARRANGE
+        const userId = "123";
+        const bookTitle = "O Senhor dos Anéis";
+
+        // simula usuário com 3 livros já emprestados
+        const mockUser = new User(userId, "João Silva");
+        mockUser.borrow("Livro 1");
+        mockUser.borrow("Livro 2");
+        mockUser.borrow("Livro 3");
+        mockRepository.findUser.mockReturnValue(mockUser);
+
+        // simula que o livro existe e está disponível
+        const mockBook = new Book(bookTitle, "J.R.R. Tolkien", 5);
+        mockRepository.findBook.mockReturnValue(mockBook);
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.borrowBook(userId, bookTitle);
+        }).toThrow("Usuário atingiu o limite de empréstimos (3)");
+    });
+
+    it('deve lançar um erro quando usuário já tem o mesmo livro emprestado', () => {
+
+        // ARRANGE
+        const userId = "123";
+        const bookTitle = "1984";
+
+        // simula usuário que já tem o livro emprestado
+        const mockUser = new User(userId, "João Silva");
+        mockUser.borrow(bookTitle);
+        mockRepository.findUser.mockReturnValue(mockUser);
+
+        // simula que o livro existe e está disponível
+        const mockBook = new Book(bookTitle, "George Orwell", 3);
+        mockRepository.findBook.mockReturnValue(mockBook);
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.borrowBook(userId, bookTitle);
+        }).toThrow("Usuário já tem esse livro emprestado");
+    });
+
+    it('deve realizar empréstimo com sucesso: desconta quantidade e registra no usuário', () => {
+
+        // ARRANGE
+        const userId = "123";
+        const bookTitle = "Clean Code";
+
+        // simula usuário sem empréstimos
+        const mockUser = new User(userId, "João Silva");
+        mockRepository.findUser.mockReturnValue(mockUser);
+
+        // simula livro disponível com quantidade 3
+        const mockBook = new Book(bookTitle, "Robert C. Martin", 3);
+        mockRepository.findBook.mockReturnValue(mockBook);
+
+        // ACT
+        const result = libraryService.borrowBook(userId, bookTitle);
+
+        // ASSERT
+        expect(result).toBe(true);
+        expect(mockBook.quantity).toBe(2); // quantidade foi decrementada
+        expect(mockUser.hasBorrowed(bookTitle)).toBe(true); // livro foi registrado no usuário
+        expect(mockUser.loanCount()).toBe(1); // usuário tem 1 empréstimo
+    });
+});
