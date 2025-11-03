@@ -45,8 +45,20 @@ class LibraryService {
     return this.repo.listUsers();
   }
 
+  removeUser(id) {
+    const user = this.repo.findUser(id);
+    if (!user) throw new Error("Usuário não encontrado");
+    
+    if (user.loanCount() > 0) {
+      throw new Error("Usuário possui empréstimos ativos");
+    }
+    
+    this.repo.removeUser(id);
+    return true;
+  }
+
   // --- Loan operations ---
-  borrowBook(userId, title) {
+  borrowBook(userId, title, borrowDate = new Date()) {
     const user = this.repo.findUser(userId);
     if (!user) throw new Error("Usuário não encontrado");
 
@@ -58,13 +70,13 @@ class LibraryService {
     if (user.loanCount() >= 3) throw new Error("Usuário atingiu o limite de empréstimos (3)");
     if (user.hasBorrowed(book.title)) throw new Error("Usuário já tem esse livro emprestado");
 
-    // tudo ok -> registra empréstimo
+    // tudo ok -> registra empréstimo com data
     book.quantity -= 1;
-    user.borrow(book.title);
+    user.borrow(book.title, borrowDate);
     return true;
   }
 
-  returnBook(userId, title) {
+  returnBook(userId, title, returnDate = new Date()) {
     const user = this.repo.findUser(userId);
     if (!user) throw new Error("Usuário não encontrado");
 
@@ -75,16 +87,45 @@ class LibraryService {
 
     if (book.quantity + 1 > 5) throw new Error("Quantidade máxima atingida");
 
-    // devolução
+    // devolução com data
     book.quantity += 1;
-    user.return(book.title);
-    return true;
+    const loan = user.return(book.title, returnDate);
+    return loan;
+  }
+
+  getLoanDuration(userId, title) {
+    const user = this.repo.findUser(userId);
+    if (!user) throw new Error("Usuário não encontrado");
+    
+    return user.calculateLoanDuration(title);
   }
 
   listLoans(userId) {
     const user = this.repo.findUser(userId);
     if (!user) throw new Error("Usuário não encontrado");
     return user.listLoans();
+  }
+
+  // --- Reports ---
+  getAvailabilityReport() {
+    const books = this.repo.listBooks();
+    
+    let totalBooks = 0;
+    let totalBorrowed = 0;
+    let totalAvailable = 0;
+
+    for (const book of books) {
+      totalBooks += book.originalQuantity;
+      totalAvailable += book.quantity;
+      totalBorrowed += (book.originalQuantity - book.quantity);
+    }
+
+    return {
+      totalBooks: totalBooks,
+      totalBorrowed: totalBorrowed,
+      totalAvailable: totalAvailable,
+      bookCount: books.length
+    };
   }
 }
 
