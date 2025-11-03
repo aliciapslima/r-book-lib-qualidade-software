@@ -17,6 +17,7 @@ beforeEach(() => {
         // Mocka os métodos chamados pelo LibraryService
         findBook: jest.fn(),
         addBook: jest.fn(),
+        removeBook: jest.fn(),
         findUser: jest.fn(),
         addUser: jest.fn(),
     };
@@ -64,6 +65,44 @@ describe('LibraryService - Livros', () => {
 
         // addBook NÃO deve ser chamado quando a validação falha
         expect(mockRepository.addBook).not.toHaveBeenCalled();
+    });
+
+    it('deve lançar um erro ao tentar remover um livro com exemplares emprestados', () => {
+
+        // ARRANGE
+        const bookTitle = "O Senhor dos Anéis";
+
+        // simula livro com quantidade original 5, mas apenas 3 disponíveis (2 emprestados)
+        const mockBook = new Book(bookTitle, "J.R.R. Tolkien", 5);
+        mockBook.quantity = 3; // 2 exemplares foram emprestados
+        mockRepository.findBook.mockReturnValue(mockBook);
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.removeBook(bookTitle);
+        }).toThrow("Não é possível remover: há exemplares emprestados");
+
+        // removeBook NÃO deve ser chamado quando há exemplares emprestados
+        expect(mockRepository.removeBook).not.toHaveBeenCalled();
+    });
+
+    it('deve remover livro com sucesso quando todas as cópias estão disponíveis', () => {
+
+        // ARRANGE
+        const bookTitle = "Clean Architecture";
+
+        // simula livro com todas as cópias disponíveis (quantity === originalQuantity)
+        const mockBook = new Book(bookTitle, "Robert C. Martin", 4);
+        // mockBook.quantity = 4 e mockBook.originalQuantity = 4 (todas as cópias disponíveis)
+        mockRepository.findBook.mockReturnValue(mockBook);
+
+        // ACT
+        const result = libraryService.removeBook(bookTitle);
+
+        // ASSERT
+        expect(result).toBe(true);
+        expect(mockRepository.removeBook).toHaveBeenCalledWith(bookTitle);
+        expect(mockRepository.removeBook).toHaveBeenCalledTimes(1);
     });
 });
 
