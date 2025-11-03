@@ -3,6 +3,7 @@
 const LibraryService = require('../services/LibraryService');
 
 const Book = require('../models/Book');
+const User = require('../models/User');
 
 // Variáveis que serão redefinidas antes de cada teste
 let mockRepository;
@@ -16,6 +17,8 @@ beforeEach(() => {
         // Mocka os métodos chamados pelo LibraryService
         findBook: jest.fn(),
         addBook: jest.fn(),
+        findUser: jest.fn(),
+        addUser: jest.fn(),
     };
 
     // 2. Cria a instância do LibraryService com o repositório mockado
@@ -42,5 +45,26 @@ describe('LibraryService - Livros', () => {
         
         // addBook NÃO deve ser chamado, pois falhou na validação
         expect(mockRepository.addBook).not.toHaveBeenCalled();
+    });
+});
+
+describe('LibraryService - Usuários', () => {
+    
+    it('deve lançar um erro ao cadastrar um usuário com identificador duplicado', () => {
+
+        // ARRANGE
+        const userId = "123";
+        const userName = "João Silva";
+
+        // simula que o usuário já existe no repositório
+        mockRepository.findUser.mockReturnValue(new User(userId, userName));
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.registerUser(userId, userName);
+        }).toThrow("Usuário já cadastrado");
+        
+        // addUser NÃO deve ser chamado, pois falhou na validação
+        expect(mockRepository.addUser).not.toHaveBeenCalled();
     });
 });
