@@ -46,6 +46,25 @@ describe('LibraryService - Livros', () => {
         // addBook NÃO deve ser chamado, pois falhou na validação
         expect(mockRepository.addBook).not.toHaveBeenCalled();
     });
+
+    it('deve lançar um erro ao registrar um livro com quantidade inválida (<=0)', () => {
+
+        // ARRANGE
+        const title = "Hamlet";
+        const author = "William Shakespeare";
+        const quantity = 0; // quantidade inválida
+
+        // simula que o livro NÃO existe no repositório
+        mockRepository.findBook.mockReturnValue(undefined);
+
+        // ACT & ASSERT
+        expect(() => {
+            libraryService.registerBook(title, author, quantity);
+        }).toThrow("Quantidade deve ser positiva");
+
+        // addBook NÃO deve ser chamado quando a validação falha
+        expect(mockRepository.addBook).not.toHaveBeenCalled();
+    });
 });
 
 describe('LibraryService - Usuários', () => {
