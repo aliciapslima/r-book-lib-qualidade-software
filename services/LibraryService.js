@@ -103,7 +103,10 @@ class LibraryService {
   listLoans(userId) {
     const user = this.repo.findUser(userId);
     if (!user) throw new Error("Usuário não encontrado");
-    return user.listLoans();
+    // Retorna versão estendida com datas para relatórios/histórico
+    // Mantemos a possibilidade de controlar via parâmetro no futuro; por enquanto
+    // devolvemos os detalhes (title, borrowDate, returnDate, isActive).
+    return user.listLoans(true);
   }
 
   // --- Reports ---

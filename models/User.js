@@ -15,7 +15,6 @@ class User {
       returnDate: null
     });
   }
-
   hasBorrowed(title) {
     return this.loans.has(title) && this.loans.get(title).returnDate === null;
   }
@@ -25,7 +24,15 @@ class User {
       throw new Error("Empréstimo não encontrado");
     }
     const loan = this.loans.get(title);
-    loan.returnDate = returnDate;
+    // Normaliza returnDate para Date (aceita Date ou algo que Date can parse)
+    const retDate = returnDate instanceof Date ? returnDate : new Date(returnDate);
+
+    // Validação: devolução não pode ser anterior ao empréstimo
+    if (retDate.getTime() < loan.borrowDate.getTime()) {
+      throw new Error("Data de devolução anterior à data de empréstimo");
+    }
+
+    loan.returnDate = retDate;
     return loan;
   }
 
@@ -40,15 +47,30 @@ class User {
     return count;
   }
 
-  listLoans() {
-    // Retorna apenas empréstimos ativos
-    const activeLoans = [];
-    for (const [title, loan] of this.loans.entries()) {
-      if (loan.returnDate === null) {
-        activeLoans.push(title);
+
+  listLoans(details = false) {
+    // Default (details = false): mantém comportamento anterior, retorna apenas títulos de empréstimos ativos
+    if (!details) {
+      const activeLoans = [];
+      for (const [title, loan] of this.loans.entries()) {
+        if (loan.returnDate === null) {
+          activeLoans.push(title);
+        }
       }
+      return activeLoans;
     }
-    return activeLoans;
+
+    // details = true: retorna histórico completo (inclui devolvidos) com informações de datas
+    const loans = [];
+    for (const [title, loan] of this.loans.entries()) {
+      loans.push({
+        title: title,
+        borrowDate: loan.borrowDate,
+        returnDate: loan.returnDate,
+        isActive: loan.returnDate === null
+      });
+    }
+    return loans;
   }
 
   getLoanInfo(title) {
