@@ -34,6 +34,12 @@ class InMemoryRepository {
     return this.users.find(u => u.id === id);
   }
 
+  removeUser(id) {
+    const before = this.users.length;
+    this.users = this.users.filter(u => u.id !== id);
+    return this.users.length !== before;
+  }
+
   listUsers() {
     return this.users.slice();
   }

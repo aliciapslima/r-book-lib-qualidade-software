@@ -7,3 +7,18 @@ npm-debug.log*
 
 # Cobertura de testes
 /coverage
+
+# IDEs
+.vscode/
+.idea/
+
+# Sistema / arquivos temporários
+.DS_Store
+.env
+
+# Outros artefatos de cobertura/relatórios
+coverage-final.json
+.nyc_output/
+
+# lockfiles locais
+npm-debug.log
