@@ -75,13 +75,13 @@ function run() {
         case "10": {
           console.log("\n=== RELATÓRIO DE DISPONIBILIDADE ===");
           const report = service.getAvailabilityReport();
-          console.log(`📚 Total de títulos cadastrados: ${report.bookCount}`);
-          console.log(`📖 Total de exemplares no acervo: ${report.totalBooks}`);
-          console.log(`📤 Exemplares emprestados: ${report.totalBorrowed} (${calculatePercentage(report.totalBorrowed, report.totalBooks)}%)`);
-          console.log(`📥 Exemplares disponíveis: ${report.totalAvailable} (${calculatePercentage(report.totalAvailable, report.totalBooks)}%)`);
+          console.log(` Total de títulos cadastrados: ${report.bookCount}`);
+          console.log(` Total de exemplares no acervo: ${report.totalBooks}`);
+          console.log(` Exemplares emprestados: ${report.totalBorrowed} (${calculatePercentage(report.totalBorrowed, report.totalBooks)}%)`);
+          console.log(` Exemplares disponíveis: ${report.totalAvailable} (${calculatePercentage(report.totalAvailable, report.totalBooks)}%)`);
           
           if (report.totalBooks > 0) {
-            console.log('\n📊 Visualização:');
+            console.log('\n Visualização:');
             displayBar('Emprestados', report.totalBorrowed, report.totalBooks, '█');
             displayBar('Disponíveis', report.totalAvailable, report.totalBooks, '░');
           }
