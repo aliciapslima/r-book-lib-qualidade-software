@@ -19,8 +19,7 @@
 - `repos/InMemoryRepository.js` — repositório em memória (livros e usuários).
 - `services/LibraryService.js` — regras de negócio (cadastro, empréstimo, devolução, relatórios).
 - `tests/` — testes Jest (ex.: `libraryService.test.js`, `user.test.js`, `book.test.js`).
-- `examples/` — exemplos de uso (scripts que usam `LibraryService`).
-- `docs/` — documentos: relatórios e descrição de história de usuário.
+- `docs/` — documentos: relatórios.
 
 **Pré-requisitos (local):**
 
